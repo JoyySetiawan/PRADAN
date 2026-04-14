@@ -1,8 +1,23 @@
 {% extends "base.html" %}
-{% block page_title %}Pengaturan Sistem{% endblock %}
+{% block page_title %}Pengaturan Akun{% endblock %}
 {% block content %}
-<div class="card border-0 shadow-sm p-5 text-center">
-    <h3 style="color: var(--pradan-blue);">Pengaturan</h3>
-    <p class="text-muted">Konfigurasi hak akses dan sistem di sini.</p>
+<div class="card border-0 shadow-sm">
+    <div class="card-body p-4 text-center">
+        <h4 class="fw-bold mb-4">Profil Saya</h4>
+        <div class="mb-3">
+            <p class="mb-1 text-muted small fw-bold">NAMA</p>
+            <h5>{{ user.name }}</h5>
+        </div>
+        <div class="mb-3">
+            <p class="mb-1 text-muted small fw-bold">EMAIL</p>
+            <h5>{{ user.email }}</h5>
+        </div>
+        <div class="mb-4">
+            <p class="mb-1 text-muted small fw-bold">POSISI</p>
+            <span class="badge bg-primary px-3">{{ user.role.upper() }}</span>
+        </div>
+        <hr>
+        <a href="{{ url_for('logout') }}" class="btn btn-danger rounded-pill px-4">Keluar / Logout</a>
+    </div>
 </div>
 {% endblock %}
