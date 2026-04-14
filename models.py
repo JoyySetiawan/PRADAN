@@ -9,6 +9,7 @@ class User(db.Model):
     email = db.Column(db.String(120), unique=True, nullable=False)
     password = db.Column(db.String(200), nullable=False)
     role = db.Column(db.String(20), nullable=False)
+    # KOLOM INI YANG DICARI SISTEM:
     is_approved = db.Column(db.Boolean, default=False)
 
 class Task(db.Model):
