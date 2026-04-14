@@ -1,0 +1,148 @@
+{% extends "base.html" %}
+{% block page_title %}Papan Kanban Pekerjaan{% endblock %}
+{% block content %}
+<div class="row">
+    <div class="col-md-4">
+        <div class="card border-0 shadow-sm bg-light h-100">
+            <div class="card-header bg-white border-0 py-3">
+                <h6 class="m-0 font-weight-bold text-dark">To Do (Belum Dikerjakan)</h6>
+            </div>
+            <div class="card-body">
+                <div class="card mb-3 border-0 shadow-sm">
+                    <div class="card-body p-3">
+                        <form action="{{ url_for('tambah_pekerjaan') }}" method="POST">
+                            <input type="text" name="title" class="form-control form-control-sm mb-2" placeholder="Judul Pekerjaan..." required>
+                            <select name="assigned_to" class="form-select form-select-sm mb-2" required>
+                                <option value="" disabled selected>Tugaskan ke...</option>
+                                {% for user in users %}
+                                <option value="{{ user.id }}">{{ user.name }} ({{ user.role }})</option>
+                                {% endfor %}
+                            </select>
+                            <button type="submit" class="btn btn-sm text-white w-100" style="background-color: var(--pradan-blue);">+ Tambah Pekerjaan</button>
+                        </form>
+                    </div>
+                </div>
+
+                <div id="list-todo" class="kanban-drop-area" data-status="todo" style="min-height: 150px;">
+                    {% for task in todo %}
+                    <div class="card mb-2 border-0 shadow-sm border-start border-3 border-secondary task-card" data-task-id="{{ task.id }}" style="cursor: grab;">
+                        <div class="card-body p-3">
+                            <h6 class="mb-1">{{ task.title }}</h6>
+                            <small class="text-muted">Untuk: {{ task.assignee.name }}</small>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="card border-0 shadow-sm bg-light h-100">
+            <div class="card-header bg-white border-0 py-3">
+                <h6 class="m-0 font-weight-bold text-danger">Doing (Sedang Proses)</h6>
+            </div>
+            <div class="card-body">
+                <div id="list-doing" class="kanban-drop-area" data-status="doing" style="min-height: 500px;">
+                    {% for task in doing %}
+                    <div class="card mb-2 border-0 shadow-sm border-start border-3 border-danger task-card" data-task-id="{{ task.id }}" style="cursor: grab;">
+                        <div class="card-body p-3">
+                            <h6 class="mb-1">{{ task.title }}</h6>
+                            <small class="text-muted">Dikerjakan oleh: {{ task.assignee.name }}</small>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="card border-0 shadow-sm bg-light h-100">
+            <div class="card-header bg-white border-0 py-3">
+                <h6 class="m-0 font-weight-bold text-success">Done (Selesai)</h6>
+            </div>
+            <div class="card-body">
+                <div id="list-done" class="kanban-drop-area" data-status="done" style="min-height: 500px;">
+                    {% for task in done %}
+                    <div class="card mb-2 border-0 shadow-sm border-start border-3 border-success task-card" data-task-id="{{ task.id }}" style="cursor: grab;">
+                        <div class="card-body p-3">
+                            <h6 class="mb-1 text-decoration-line-through text-muted">{{ task.title }}</h6>
+                            <small class="text-muted">Selesai oleh: {{ task.assignee.name }}</small>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
+<script>
+    const listTodo = document.getElementById('list-todo');
+    const listDoing = document.getElementById('list-doing');
+    const listDone = document.getElementById('list-done');
+
+    const sortableOptions = {
+        group: 'kanban',
+        animation: 150,
+        ghostClass: 'bg-light',
+        onEnd: function (evt) {
+            const itemEl = evt.item;   // Kartu yang digeser
+            const toList = evt.to;     // Kolom tujuan
+            const fromList = evt.from; // Kolom asal
+            
+            // Jika digeser tapi jatuh di kolom yang sama, abaikan saja
+            if (toList === fromList) return; 
+
+            const taskId = itemEl.getAttribute('data-task-id');
+            const newStatus = toList.getAttribute('data-status');
+
+            // Kirim data perubahan status ke database secara diam-diam (Background)
+            fetch(`/api/tasks/${taskId}/edit?user_id=1`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ status: newStatus })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    // Jika ditolak oleh sistem wewenang (RBAC), kembalikan kartu ke asal
+                    alert('⛔ GAGAL: ' + data.error);
+                    fromList.appendChild(itemEl); 
+                } else {
+                    // JIKA SUKSES: Ganti warna kartu tanpa perlu refresh halaman
+                    // Hapus semua warna border lama
+                    itemEl.classList.remove('border-secondary', 'border-danger', 'border-success');
+                    
+                    // Ambil elemen judul untuk efek coretan (strikethrough)
+                    const titleEl = itemEl.querySelector('h6');
+                    titleEl.classList.remove('text-decoration-line-through', 'text-muted');
+
+                    // Tambahkan warna border sesuai kolom tujuan
+                    if (newStatus === 'todo') {
+                        itemEl.classList.add('border-secondary');
+                    } else if (newStatus === 'doing') {
+                        itemEl.classList.add('border-danger');
+                    } else if (newStatus === 'done') {
+                        itemEl.classList.add('border-success');
+                        // Beri coretan judul jika statusnya Done
+                        titleEl.classList.add('text-decoration-line-through', 'text-muted');
+                    }
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Terjadi kesalahan saat menghubungi server.');
+                fromList.appendChild(itemEl); // Kembalikan kartu jika internet/server error
+            });
+        }
+    };
+
+    // Aktifkan draggable untuk ketiga area
+    new Sortable(listTodo, sortableOptions);
+    new Sortable(listDoing, sortableOptions);
+    new Sortable(listDone, sortableOptions);
+</script>
+{% endblock %}
