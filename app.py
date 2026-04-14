@@ -16,6 +16,10 @@ def get_current_user():
     if user_id: return db.session.get(User, user_id)
     return None
 
+@app.context_processor
+def inject_user():
+    return dict(user=get_current_user(), User=User)
+
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
@@ -55,18 +59,18 @@ def register():
 def home():
     user = get_current_user()
     if not user: return redirect(url_for('login'))
-    return render_template('dashboard.html', user=user, 
+    return render_template('dashboard.html', 
                            total_pekerjaan=Task.query.count(),
                            sedang_dikerjakan=Task.query.filter_by(status='todo').count(),
                            total_karyawan=User.query.filter_by(is_approved=True).count(),
-                           logs=ActivityLog.query.order_by(ActivityLog.created_at.desc()).limit(5).all(), User=User)
+                           logs=ActivityLog.query.order_by(ActivityLog.created_at.desc()).limit(5).all())
 
 @app.route('/semuapekerjaan')
 def semuapekerjaan():
     user = get_current_user()
     if not user: return redirect(url_for('login'))
     if user.role == 'accounting': return redirect(url_for('accounting_sheet'))
-    return render_template('SemuaPekerjaan.html', user=user, 
+    return render_template('SemuaPekerjaan.html', 
                            todo=Task.query.filter_by(status='todo').all(),
                            doing=Task.query.filter_by(status='waiting').all(),
                            done=Task.query.filter_by(status='done').all(),
@@ -75,36 +79,32 @@ def semuapekerjaan():
 @app.route('/accounting-sheet')
 def accounting_sheet():
     user = get_current_user()
-    if not user or user.role not in ['accounting', 'owner']: 
-        flash("Akses ditolak!", "danger")
-        return redirect(url_for('home'))
-    return render_template('accounting_sheet.html', user=user, tasks=Task.query.all())
+    if not user or user.role not in ['accounting', 'owner']: return redirect(url_for('home'))
+    return render_template('accounting_sheet.html', tasks=Task.query.all())
 
 @app.route('/pekerjaan-aktif')
 def pekerjaan_aktif():
     user = get_current_user()
     if not user: return redirect(url_for('login'))
-    # Menampilkan yang statusnya 'todo' (sesuai Guide Book kamu)
-    tasks = Task.query.filter_by(status='todo').all()
-    return render_template('pekerjaan_aktif.html', user=user, tasks=tasks)
+    return render_template('pekerjaan_aktif.html')
 
 @app.route('/karyawan')
 def karyawan():
     user = get_current_user()
     if not user: return redirect(url_for('login'))
-    return render_template('karyawan.html', user=user, semua_user=User.query.all())
-
-@app.route('/pengaturan')
-def pengaturan():
-    user = get_current_user()
-    if not user: return redirect(url_for('login'))
-    return render_template('pengaturan.html', user=user)
+    return render_template('karyawan.html', semua_user=User.query.all())
 
 @app.route('/klien')
 def klien():
     user = get_current_user()
     if not user: return redirect(url_for('login'))
-    return render_template('klien.html', user=user)
+    return render_template('klien.html')
+
+@app.route('/pengaturan')
+def pengaturan():
+    user = get_current_user()
+    if not user: return redirect(url_for('login'))
+    return render_template('pengaturan.html')
 
 @app.route('/logout')
 def logout():
@@ -142,7 +142,6 @@ def tambah_pekerjaan():
     if date_str:
         event_date = datetime.strptime(date_str, '%Y-%m-%d').date()
         days_to_event = (event_date - datetime.now().date()).days
-        # H-6 Bulan otomatis
         status = 'todo' if days_to_event <= 180 else 'waiting'
     else:
         event_date = None
@@ -156,6 +155,20 @@ def tambah_pekerjaan():
     db.session.commit()
     flash("Pekerjaan berhasil ditambahkan!", "success")
     return redirect(url_for('semuapekerjaan'))
+
+@app.route('/api/tasks/<int:task_id>/edit', methods=['POST'])
+def edit_task_api(task_id):
+    user = get_current_user()
+    task = db.session.get(Task, task_id)
+    if not task: return jsonify({'error': 'Not found'}), 404
+    data = request.json
+    old_status = task.status
+    new_status = data.get('status')
+    task.status = new_status
+    log = ActivityLog(user_id=user.id, action=f"Geser '{task.client_name}' dari {old_status.upper()} ke {new_status.upper()}")
+    db.session.add(log)
+    db.session.commit()
+    return jsonify({'success': True})
 
 if __name__ == '__main__':
     app.run(debug=True)

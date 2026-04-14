@@ -14,11 +14,10 @@ class User(db.Model):
 class Task(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     client_name = db.Column(db.String(100), nullable=False)
-    event_date = db.Column(db.Date, nullable=True) # Untuk monitoring H-6 Bulan
+    event_date = db.Column(db.Date, nullable=True) 
     venue = db.Column(db.String(200), nullable=True)
-    status = db.Column(db.String(20), default='waiting') # waiting, todo, done
+    status = db.Column(db.String(20), default='waiting') 
     
-    # Bagian Keuangan (Hanya bisa diedit Accounting)
     total_budget = db.Column(db.Float, default=0.0)
     amount_paid = db.Column(db.Float, default=0.0)
     payment_proof = db.Column(db.String(200), nullable=True) 
