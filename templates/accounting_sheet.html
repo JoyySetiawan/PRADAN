@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% block page_title %}Laporan Keuangan (Spreadsheet Mode){% endblock %}
+{% block content %}
+<div class="card border-0 shadow-sm">
+    <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+        <h5 class="m-0 fw-bold text-primary"><i class="fas fa-table me-2"></i> Monitoring Keuangan Client</h5>
+        <button class="btn btn-sm btn-success" onclick="window.print()"><i class="fas fa-print me-1"></i> Cetak Laporan</button>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-bordered table-hover m-0 align-middle">
+                <thead class="table-dark">
+                    <tr>
+                        <th>Client / Event</th>
+                        <th>Total Kontrak</th>
+                        <th>Jumlah Dibayar</th>
+                        <th>Sisa Tagihan</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for task in tasks %}
+                    <tr>
+                        <td>
+                            <strong>{{ task.client_name }}</strong><br>
+                            <small class="text-muted">{{ task.venue }} ({{ task.event_date }})</small>
+                        </td>
+                        <td>Rp {{ "{:,.0f}".format(task.total_budget or 0) }}</td>
+                        <td>Rp {{ "{:,.0f}".format(task.amount_paid or 0) }}</td>
+                        <td class="text-danger fw-bold">
+                            Rp {{ "{:,.0f}".format((task.total_budget or 0) - (task.amount_paid or 0)) }}
+                        </td>
+                        <td>
+                            {% if task.amount_paid and task.total_budget and task.amount_paid >= task.total_budget %}
+                                <span class="badge bg-success">LUNAS</span>
+                            {% elif task.amount_paid and task.amount_paid > 0 %}
+                                <span class="badge bg-warning text-dark">DP / DICICIL</span>
+                            {% else %}
+                                <span class="badge bg-secondary">BELUM BAYAR</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="5" class="text-center p-4 text-muted">Belum ada data pekerjaan.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}
