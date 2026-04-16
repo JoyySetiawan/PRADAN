@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block page_title %}Library Vendor Pradan{% endblock %}
+{% block content %}
+<div class="card border-0 shadow-sm p-4">
+    <div class="d-flex mb-4 overflow-auto border-bottom pb-2">
+        <button class="btn btn-outline-primary me-2 active">Dekor</button>
+        <button class="btn btn-outline-primary me-2">MUA</button>
+        <button class="btn btn-outline-primary me-2">Catering</button>
+        <button class="btn btn-outline-primary me-2">Foto/Video</button>
+    </div>
+
+    {% for i in range(1, 4) %}
+    <div class="mb-4">
+        <h6 class="fw-bold text-muted mb-3">
+            TIER {{ i }} 
+            {% if i == 1 %}(Premium / Harga Tinggi)
+            {% elif i == 2 %}(Standar / Menengah)
+            {% elif i == 3 %}(Budget Friendly)
+            {% endif %}
+        </h6>
+        
+        <div class="d-flex flex-wrap gap-3 p-3 bg-light rounded border">
+            <div class="bg-white border rounded d-flex flex-column align-items-center justify-content-center shadow-sm" style="width: 120px; height: 120px;">
+                <i class="fas fa-image fa-2x text-muted mb-2"></i>
+                <small class="text-muted fw-bold">Vendor A</small>
+            </div>
+            <div class="bg-white border rounded d-flex flex-column align-items-center justify-content-center shadow-sm" style="width: 120px; height: 120px;">
+                <i class="fas fa-image fa-2x text-muted mb-2"></i>
+                <small class="text-muted fw-bold">Vendor B</small>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}
