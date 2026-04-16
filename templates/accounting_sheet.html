@@ -16,6 +16,7 @@
                         <th>Jumlah Dibayar</th>
                         <th>Sisa Tagihan</th>
                         <th>Status</th>
+                        <th class="text-center">Aksi</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -39,10 +40,15 @@
                                 <span class="badge bg-secondary">BELUM BAYAR</span>
                             {% endif %}
                         </td>
+                        <td class="text-center">
+                            <a href="{{ url_for('delete_task', task_id=task.id) }}" class="btn btn-sm btn-danger" onclick="return confirm('Yakin ingin menghapus pekerjaan ini?')" title="Hapus Klien">
+                                <i class="fas fa-trash"></i>
+                            </a>
+                        </td>
                     </tr>
                     {% else %}
                     <tr>
-                        <td colspan="5" class="text-center p-4 text-muted">Belum ada data pekerjaan.</td>
+                        <td colspan="6" class="text-center p-4 text-muted">Belum ada data pekerjaan.</td>
                     </tr>
                     {% endfor %}
                 </tbody>

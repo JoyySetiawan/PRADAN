@@ -1,8 +1,78 @@
 {% extends "base.html" %}
-{% block page_title %}Pekerjaan Sedang Berjalan{% endblock %}
+{% block page_title %}Detail Pekerjaan Berjalan (Doing){% endblock %}
 {% block content %}
-<div class="card border-0 shadow-sm p-5 text-center">
-    <h3 style="color: var(--pradan-blue);">Status Pekerjaan Aktif</h3>
-    <p class="text-muted">Monitoring proyek yang sedang berstatus 'Doing'.</p>
+
+<div class="row" style="min-height: 75vh;">
+    <div class="col-md-3 p-0 border-end bg-white shadow-sm rounded-start">
+        <div class="p-3 bg-light border-bottom">
+            <h6 class="m-0 fw-bold text-muted"><i class="fas fa-list-ul me-2"></i> Klien Aktif</h6>
+        </div>
+        <div class="list-group list-group-flush" id="list-tab" role="tablist">
+            {% for task in tasks %}
+            <a class="list-group-item list-group-item-action {% if loop.first %}active{% endif %} p-3" 
+               id="list-{{ task.id }}-list" data-bs-toggle="list" href="#list-{{ task.id }}" role="tab">
+                <div class="d-flex w-100 justify-content-between align-items-center mb-1">
+                    <h6 class="mb-0 fw-bold">{{ task.client_name }}</h6>
+                </div>
+                <small class="text-muted"><i class="far fa-calendar-alt"></i> {{ task.event_date or 'TBA' }}</small>
+            </a>
+            {% else %}
+            <div class="p-4 text-center text-muted small">
+                <i class="fas fa-box-open fa-2x mb-2 text-light"></i><br>
+                Belum ada pekerjaan di kolom Doing.
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <div class="col-md-9 p-0 bg-light shadow-sm rounded-end">
+        <div class="tab-content h-100 p-4" id="nav-tabContent">
+            
+            {% for task in tasks %}
+            <div class="tab-pane fade {% if loop.first %}show active{% endif %} h-100" id="list-{{ task.id }}" role="tabpanel">
+                
+                <div class="d-flex justify-content-between align-items-center mb-4 pb-3 border-bottom">
+                    <div>
+                        <h3 class="fw-bold" style="color: var(--pradan-blue);">{{ task.client_name }}</h3>
+                        <span class="text-muted"><i class="fas fa-map-marker-alt text-danger"></i> Venue: {{ task.venue or 'Belum ditentukan' }}</span>
+                        <span class="text-muted ms-3"><i class="fas fa-user-tie text-primary"></i> PIC: {{ task.assignee.name if task.assignee else 'Belum ada' }}</span>
+                    </div>
+                    <span class="badge bg-danger px-3 py-2 fs-6 shadow-sm">STATUS: DOING</span>
+                </div>
+
+                <form action="{{ url_for('pekerjaan_aktif') }}" method="POST" class="h-100">
+                    <input type="hidden" name="task_id" value="{{ task.id }}">
+
+                    <div class="row h-100">
+                        <div class="col-md-6 mb-3">
+                            <label class="fw-bold small text-muted mb-2"><i class="fas fa-check-square me-1"></i> Apa saja yang sudah dikerjakan?</label>
+                            <textarea name="progress_notes" class="form-control shadow-sm border-0" rows="12" placeholder="Contoh:&#10;1. DP Gedung Lunas&#10;2. Meeting vendor dekorasi selesai&#10;3. Test food dijadwalkan minggu depan...">{{ task.progress_notes or '' }}</textarea>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label class="fw-bold small text-muted mb-2"><i class="fas fa-store me-1"></i> Vendor Siapa Saja?</label>
+                            <textarea name="vendor_info" class="form-control shadow-sm border-0" rows="12" placeholder="Contoh:&#10;- Dekor: Vendor Indah (Tier 1)&#10;- MUA: Sanggar Cantik&#10;- Catering: Sedap Rasa...">{{ task.vendor_info or '' }}</textarea>
+                        </div>
+                    </div>
+                    
+                    <div class="text-end mt-3">
+                        <button type="submit" class="btn text-white px-5 py-2 fw-bold shadow" style="background-color: var(--pradan-blue);">
+                            <i class="fas fa-save me-2"></i> Simpan Laporan
+                        </button>
+                    </div>
+                </form>
+
+            </div>
+            {% else %}
+            <div class="d-flex flex-column align-items-center justify-content-center h-100 text-muted">
+                <i class="fas fa-clipboard-check fa-4x mb-3 text-light"></i>
+                <h5>Tidak ada proyek yang sedang berjalan.</h5>
+                <p>Silakan geser kartu dari kolom "To Do" ke "Doing" di papan Kanban.</p>
+            </div>
+            {% endfor %}
+
+        </div>
+    </div>
 </div>
+
 {% endblock %}
